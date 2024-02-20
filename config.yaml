@@ -1,0 +1,9 @@
+credentials:
+  usernames:
+    algoritma:
+      name: Algoritma Product Team
+      password: $2b$12$SATnIbcB6ptXFNkWc7Qvp.J9bZwibCwLYIFUzYU3nwZlX7HMACYGa # To be replaced with hashed password
+cookie:
+  expiry_days: 0
+  key: algoritma # Must be string
+  name: algoritma
