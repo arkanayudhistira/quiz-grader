@@ -14,8 +14,6 @@
 ### Preparation 
 
 Sebelum mengakses aplikasi, pastikan anda telah mempersiapkan hal-hal berikut:
-- Buat akun Streamlit melalui https://share.streamlit.io/signup
-- Jika anda belum mendapatkan akses, silahkan request akses untuk membuka dashboard ke Arkana (arkana@algorit.ma)
 - Download file CSV hasil quiz dari Algoritma Online
 
 ### Grade Quiz 
