@@ -205,7 +205,7 @@ def QuizGrader(filepath, link, sheet_name, specialization, course_name, quiz_nam
 
     # Use the `courses().list()` method to show a list of the user's courses
 
-    results = service.courses().list(pageSize=10).execute()
+    results = service.courses().list(pageSize=20).execute()
     courses = results.get('courses', [])
 
     if not courses:
@@ -312,41 +312,45 @@ def QuizGrader(filepath, link, sheet_name, specialization, course_name, quiz_nam
     quiz_code = quizcode(quiz_input)
 
     for submission in submissions:
-        # Retrieve student's email
-        submission_profile = service.courses().students().get(courseId=course_id, userId=submission['userId']).execute()
-        student_df = df.loc[df['Email Classroom'] == submission_profile['profile']['emailAddress'].lower()]
-        
-        # Retrieve student's grade
-        if not student_df.empty:
-            if isinstance(student_df[quiz_code].values[0], int) or student_df[quiz_code].values[0].isnumeric():
-                submission_grade = student_df[quiz_code].values[0]
+        try:
+            # Retrieve student's email
+            submission_profile = service.courses().students().get(courseId=course_id, userId=submission['userId']).execute()
+            student_df = df.loc[df['Email Classroom'] == submission_profile['profile']['emailAddress'].lower()]
+            
+            # Retrieve student's grade
+            if not student_df.empty:
+                if isinstance(student_df[quiz_code].values[0], int) or student_df[quiz_code].values[0].isnumeric():
+                    submission_grade = student_df[quiz_code].values[0]
+                else:
+                    warn.append(f"{submission_profile['profile']['name']['fullName']} ({submission_profile['profile']['emailAddress']}) has no grade")
+                    grade.append([submission_profile['profile']['name']['fullName'], submission_profile['profile']['emailAddress'], None, "NO GRADE"])
+                    continue      
             else:
-                warn.append(f"{submission_profile['profile']['name']['fullName']} ({submission_profile['profile']['emailAddress']}) has no grade")
-                grade.append([submission_profile['profile']['name']['fullName'], submission_profile['profile']['emailAddress'], None, "NO GRADE"])
-                continue      
-        else:
-            warn.append(f"{submission_profile['profile']['name']['fullName']} ({submission_profile['profile']['emailAddress']}) was not found")
-            grade.append([submission_profile['profile']['name']['fullName'], submission_profile['profile']['emailAddress'], None, "NOT FOUND"])
-            continue
+                warn.append(f"{submission_profile['profile']['name']['fullName']} ({submission_profile['profile']['emailAddress']}) was not found")
+                grade.append([submission_profile['profile']['name']['fullName'], submission_profile['profile']['emailAddress'], None, "NOT FOUND"])
+                continue
 
-        # Grade the submission as draftGrade
-        studentSubmission = {
-            'draftGrade': str(submission_grade),
-            'assignedGrade': str(submission_grade)
-        }
-
-        response = service.courses().courseWork().studentSubmissions().patch(
-            courseId=course_id,
-            courseWorkId=classwork['id'],
-            id=submission['id'],
-            updateMask='assignedGrade,draftGrade',
-            body = studentSubmission).execute()
+            # Grade the submission as draftGrade
+            studentSubmission = {
+                'draftGrade': str(submission_grade),
+                'assignedGrade': str(submission_grade)
+            }
+            
         
-        if submission['state'] == 'TURNED_IN':
-            response = service.courses().courseWork().studentSubmissions().return_(
+            response = service.courses().courseWork().studentSubmissions().patch(
                 courseId=course_id,
                 courseWorkId=classwork['id'],
-                id=submission['id']).execute()
+                id=submission['id'],
+                updateMask='assignedGrade,draftGrade',
+                body = studentSubmission).execute()
+        
+            if submission['state'] == 'TURNED_IN':
+                response = service.courses().courseWork().studentSubmissions().return_(
+                    courseId=course_id,
+                    courseWorkId=classwork['id'],
+                    id=submission['id']).execute()
+        except:
+            continue
         
         grade.append([submission_profile['profile']['name']['fullName'], submission_profile['profile']['emailAddress'], submission_grade, "GRADED"])
 

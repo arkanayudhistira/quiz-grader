@@ -49,7 +49,7 @@ if authentication_status:
         service = build('classroom', 'v1', credentials=creds)
 
         # Use the `courses().list()` method to show a list of the user's courses
-        results = service.courses().list(pageSize=10).execute()
+        results = service.courses().list(pageSize=20).execute()
         courses = results.get('courses', [])
 
         return creds, courses
@@ -91,9 +91,9 @@ if authentication_status:
 
         with col2:
             if specialization == 'Data Analytics':
-                sheet_name = st.text_input("Input Score Academy Sheet Name", value="Xion DA")
+                sheet_name = st.text_input("Input Score Academy Sheet Name", value=f"{course_name.split()[0]} DA")
             else:
-                sheet_name = st.text_input("Input Score Academy Sheet Name", value="Academy: Batch 24")
+                sheet_name = st.text_input("Input Score Academy Sheet Name", value=f"Academy: Batch {ord(course_name.split()[0][0])-64}")
 
         filepath = st.file_uploader("Upload Algoritma Online CSV", type="csv")
 
