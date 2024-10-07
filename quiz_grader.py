@@ -195,8 +195,8 @@ def QuizGrader(filepath, link, sheet_name, specialization, course_name, quiz_nam
     df = pd.concat([email, grade_dv, grade_ml], axis=1)
     df.columns = df.iloc[0]
     df.drop(index=0, inplace=True)
-    df['Email'] = df['Email'].str.lower()
-    df['Email Classroom'] = df['Email Classroom'].str.lower()
+    df['Email Algoritma Online'] = df['Email Algoritma Online'].str.strip().str.lower()
+    df['Email Classroom'] = df['Email Classroom'].str.strip().str.lower()
 
     # In this section, the user is going to choose which Google Classroom Course that is going to be accessed
     # Call the Google Classroom API to access various methods with user's access from the credential that has been authenticated
@@ -268,8 +268,8 @@ def QuizGrader(filepath, link, sheet_name, specialization, course_name, quiz_nam
     QUIZ_DF = QUIZ_DF.drop_duplicates("USER EMAIL")
     passed_email = QUIZ_DF["USER EMAIL"]
 
-    df.loc[df["Email"].isin(passed_email.values), quizcode(quiz_input)] = max_score(quiz_input)
-    df.loc[~df["Email"].isin(passed_email.values), quizcode(quiz_input)] = 0
+    df.loc[df["Email Algoritma Online"].isin(passed_email.values), quizcode(quiz_input)] = max_score(quiz_input)
+    df.loc[~df["Email Algoritma Online"].isin(passed_email.values), quizcode(quiz_input)] = 0
 
     try:
         service = build('sheets', 'v4', credentials=creds)
