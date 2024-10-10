@@ -1,9 +1,6 @@
 # Import required dependencies to use Google's API
 import pandas as pd
 
-from google.auth.transport.requests import Request
-from google.oauth2.credentials import Credentials
-from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 
@@ -226,19 +223,6 @@ def QuizGrader(filepath, link, sheet_name, specialization, course_name, quiz_nam
     else:
         print(f'{course_input} found with ID {course_id}')
 
-    
-    # Input the quiz code (**case-insensitive**) that is going to be accessed. If the quiz was found, the quiz's `id` will be retrieved. **Quiz Input :**
-    # 
-    #  - `P4DS` : 1. Q: Programming for Data Science (P4DS) & Practical Statistic (PS)
-    #  - `DV` : 2. Q: Data Visualization (DV)
-    #  - `IP` : 3. Q: Interactive Plotting (IP)
-    #  - `RM`
-    #  - `C1`
-    #  - `C2`
-    #  - `UL`
-    #  - `TS`
-    #  - `NN`
-
     service = build('classroom', 'v1', credentials=creds)
     response = service.courses().courseWork().list(courseId=course_id).execute()
     classworks = response.get('courseWork')
@@ -287,8 +271,60 @@ def QuizGrader(filepath, link, sheet_name, specialization, course_name, quiz_nam
     except HttpError as error:
         print(f"An error occurred: {error}")
 
+    return df
+
     # Use the `courses().courseWork().studentSubmissions().list()` method to store a list of the quiz's submissions
 
+def ReturnClassroom(df, course_name, quiz_name, credentials): 
+    
+    # In this section, the user is going to choose which Google Classroom Course that is going to be accessed
+    # Call the Google Classroom API to access various methods with user's access from the credential that has been authenticated
+    creds = credentials
+    service = build('classroom', 'v1', credentials=creds)
+
+    # Use the `courses().list()` method to show a list of the user's courses
+
+    results = service.courses().list(pageSize=20).execute()
+    courses = results.get('courses', [])
+
+    if not courses:
+        print('No courses found.')
+
+    course_input = course_name
+    course_lowercase = course_input.lower()
+    course_id = None
+
+    for course in courses:
+        if course_lowercase == course['name'].lower():
+            course_id = course['id']
+            break
+
+    if course_id == None:
+        raise Exception(f"{course_input} course not found")
+
+    else:
+        print(f'{course_input} found with ID {course_id}')
+
+    service = build('classroom', 'v1', credentials=creds)
+    response = service.courses().courseWork().list(courseId=course_id).execute()
+    classworks = response.get('courseWork')
+
+    while response.get('nextPageToken'):
+        response = service.courses().students().list(courseId=course_id, pageToken = response['nextPageToken']).execute()
+        classworks.extend(response.get('courseWork'))
+
+    quiz_input = quiz_name
+    quiz_id = None
+
+    for classwork in classworks:
+        if classwork['title'] == classcode(quiz_input):
+            quiz_id = classwork['id']
+            break
+
+    if quiz_id == None:
+        raise Exception(f"Quiz not found")
+    else:
+        print(f"{classwork['title']} Quiz was found")
     submissions = []
 
     service = build('classroom', 'v1', credentials=creds)

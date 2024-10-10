@@ -1,13 +1,10 @@
 import os
 import pandas as pd
 import streamlit as st
-from quiz_grader import QuizGrader
+from quiz_grader import QuizGrader, ReturnClassroom
 import time
 
-
-from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
-from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 import streamlit_authenticator as stauth
 
@@ -63,6 +60,29 @@ if authentication_status:
     grade_table = pd.DataFrame()
     warning_text = ""
 
+    st.markdown(
+        """
+        <style>
+            section[data-testid="stSidebar"] {
+                width: 500px !important; # Set the width to your desired value
+            }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.sidebar.header('💡 How to Use:')
+    st.sidebar.markdown(
+'''
+1. Please select the Google Classroom Course, Specialization, and Class Name of the Quiz.
+2. Make sure that the sheet name from [Algoritma Score Academy](https://docs.google.com/spreadsheets/d/1cGJ0pn9k9gKCBnceWVwaL9D7BBDMNjLh8uPYlaBlJi8) is correct.
+3. Download the quiz grades file from [Algortima WP Admin](https://algoritmaonline.com/wp-admin/edit.php?post_type=sfwd-quiz) and upload the CSV file.
+4. Press the **Grade Quiz to Score Academy** button and check [Algoritma Score Academy](https://docs.google.com/spreadsheets/d/1cGJ0pn9k9gKCBnceWVwaL9D7BBDMNjLh8uPYlaBlJi8) to see if the grades are correct.
+5. If you encountered a mistake, you can manually change the grades.
+6. Press the **Return Grade to Google Classroom** button to return the grades to the students in the Google Classroom.
+'''
+    )
+
     creds, courses = Get_Courses()
     course_name = st.selectbox("Select Course", [course['name'] for course in courses], index=None)
 
@@ -97,23 +117,45 @@ if authentication_status:
 
         filepath = st.file_uploader("Upload Algoritma Online CSV", type="csv")
 
-    if filepath != None:
-        _, _, col3, col4, _ = st.columns(5)
+    if 'graded' not in st.session_state:
+        st.session_state['graded'] = False
 
-        with col3:
-            button = st.button('Grade Quiz')
+    if filepath != None:
+        _, col2, col3, col4, _ = st.columns([1,3,1,3,1])
+
+        with col2:
+            grade = st.button('Grade Quiz to \n\n Score Academy', use_container_width=True)
+
         with col4:
-            if button:
-                with st.spinner('Grading...'):
-                    grade_table, warnings = QuizGrader(filepath=filepath,
-                                                    link='https://docs.google.com/spreadsheets/d/1cGJ0pn9k9gKCBnceWVwaL9D7BBDMNjLh8uPYlaBlJi8/edit#gid=455932940',
-                                                    specialization=specialization,
-                                                    sheet_name=sheet_name, 
-                                                    course_name=course_name, 
-                                                    quiz_name=quiz_name, 
-                                                    credentials=creds)
-        if button:
+            return_classroom = st.button('Return Grade to \n\n Google Classroom', use_container_width=True)
+
+        if grade:
+            with st.spinner('Grading Quiz to Score Academy...'):
+                df = QuizGrader(filepath=filepath,
+                                link='https://docs.google.com/spreadsheets/d/1cGJ0pn9k9gKCBnceWVwaL9D7BBDMNjLh8uPYlaBlJi8/edit#gid=455932940',
+                                specialization=specialization,
+                                sheet_name=sheet_name, 
+                                course_name=course_name, 
+                                quiz_name=quiz_name, 
+                                credentials=creds)
             success = st.success('Grading Successful!')
+
+            st.session_state['graded'] = True
+
+            time.sleep(3)
+            success.empty()
+                
+        if return_classroom and st.session_state['graded'] == False:
+            st.error('Please Grade the Quiz first using the **Grade Quiz to Score Academy** button')
+        
+        elif return_classroom and st.session_state['graded'] == True:
+            with st.spinner('Returning Grade to Google Classroom...'):
+                grade_df, warnings = ReturnClassroom(df=df,
+                                                     course_name=course_name, 
+                                                     quiz_name=quiz_name, 
+                                                     credentials=creds)
+                
+            success = st.success('Return Successful!')
             my_bar = st.progress(0, text="Loading result. Please wait...")
 
             for percent_complete in range(100):
