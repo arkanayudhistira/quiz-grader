@@ -153,13 +153,14 @@ def max_score(code):
                 raise Exception(f'{code} quiz not found')
         
 
-def QuizGrader(filepath, link, sheet_name, specialization, course_name, quiz_name, credentials):  
+def QuizGrader(filepath, link, sheet_name, specialization, quiz_name, credentials):  
 
     QUIZ_DF = pd.read_csv(filepath) # Quiz CSV Path
     SCORE_ACADEMY_LINK = link # Score Academy Link
     NAMA_SHEET = sheet_name # Sheet Name (Wizard) 
 
     creds = credentials
+    quiz_input = quiz_name
 
     # In the section, the user is going to access the scores that have been entered on the spreadsheet `Score Academy`  
     # Input the link to the Score Academy spreadsheet and retrieve the Spreadsheet ID
@@ -195,55 +196,6 @@ def QuizGrader(filepath, link, sheet_name, specialization, course_name, quiz_nam
     df['Email Algoritma Online'] = df['Email Algoritma Online'].str.strip().str.lower()
     df['Email Classroom'] = df['Email Classroom'].str.strip().str.lower()
 
-    # In this section, the user is going to choose which Google Classroom Course that is going to be accessed
-    # Call the Google Classroom API to access various methods with user's access from the credential that has been authenticated
-
-    service = build('classroom', 'v1', credentials=creds)
-
-    # Use the `courses().list()` method to show a list of the user's courses
-
-    results = service.courses().list(pageSize=20).execute()
-    courses = results.get('courses', [])
-
-    if not courses:
-        print('No courses found.')
-
-    course_input = course_name
-    course_lowercase = course_input.lower()
-    course_id = None
-
-    for course in courses:
-        if course_lowercase == course['name'].lower():
-            course_id = course['id']
-            break
-
-    if course_id == None:
-        raise Exception(f"{course_input} course not found")
-
-    else:
-        print(f'{course_input} found with ID {course_id}')
-
-    service = build('classroom', 'v1', credentials=creds)
-    response = service.courses().courseWork().list(courseId=course_id).execute()
-    classworks = response.get('courseWork')
-
-    while response.get('nextPageToken'):
-        response = service.courses().students().list(courseId=course_id, pageToken = response['nextPageToken']).execute()
-        classworks.extend(response.get('courseWork'))
-
-    quiz_input = quiz_name
-    quiz_id = None
-
-    for classwork in classworks:
-        if classwork['title'] == classcode(quiz_input):
-            quiz_id = classwork['id']
-            break
-
-    if quiz_id == None:
-        raise Exception(f"Quiz not found")
-    else:
-        print(f"{classwork['title']} Quiz was found")
-
     # In this section, the received grade is going to be written in Score Academy
 
     QUIZ_DF['USER EMAIL'] = QUIZ_DF['USER EMAIL'].str.strip().str.lower()
@@ -275,8 +227,48 @@ def QuizGrader(filepath, link, sheet_name, specialization, course_name, quiz_nam
 
     # Use the `courses().courseWork().studentSubmissions().list()` method to store a list of the quiz's submissions
 
-def ReturnClassroom(df, course_name, quiz_name, credentials): 
-    
+def ReturnClassroom(link, sheet_name, specialization, course_name, quiz_name, credentials):
+
+    SCORE_ACADEMY_LINK = link # Score Academy Link
+    NAMA_SHEET = sheet_name # Sheet Name (Wizard) 
+
+    creds = credentials
+    quiz_input = quiz_name
+
+    # In the section, the user is going to access the scores that have been entered on the spreadsheet `Score Academy`  
+    # Input the link to the Score Academy spreadsheet and retrieve the Spreadsheet ID
+
+    SCORE_ACADEMY_ID = SCORE_ACADEMY_LINK.split(sep='/')[-2]
+
+    # Specify the sheet and the cell ranges that is going to be accessed
+    if specialization == "Data Analytics":
+        GRADE_RANGE = [f'{NAMA_SHEET}!D:E', f'{NAMA_SHEET}!F:I', f'{NAMA_SHEET}!J:K']
+    else:
+        GRADE_RANGE = [f'{NAMA_SHEET}!D:E', f'{NAMA_SHEET}!F:H', f'{NAMA_SHEET}!M:R']
+
+    # Call the Google Spreadsheet API and retrieve the values of the ranges that have been specified
+
+    try:
+        service = build('sheets', 'v4', credentials=creds)
+        sheet = service.spreadsheets().values().batchGet(spreadsheetId=SCORE_ACADEMY_ID,
+                                                         ranges=GRADE_RANGE).execute()
+        values = sheet.get('valueRanges', [])
+            
+    except HttpError as error:
+        print(error)
+
+    # Concat the retrieved values as a dataframe
+
+    email = pd.DataFrame(values[0].get('values'))
+    grade_dv = pd.DataFrame(values[1].get('values'))
+    grade_ml = pd.DataFrame(values[2].get('values'))
+
+    df = pd.concat([email, grade_dv, grade_ml], axis=1)
+    df.columns = df.iloc[0]
+    df.drop(index=0, inplace=True)
+    df['Email Algoritma Online'] = df['Email Algoritma Online'].str.strip().str.lower()
+    df['Email Classroom'] = df['Email Classroom'].str.strip().str.lower()
+
     # In this section, the user is going to choose which Google Classroom Course that is going to be accessed
     # Call the Google Classroom API to access various methods with user's access from the credential that has been authenticated
     creds = credentials

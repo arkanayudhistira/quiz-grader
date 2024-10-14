@@ -135,7 +135,6 @@ if authentication_status:
                                 link='https://docs.google.com/spreadsheets/d/1cGJ0pn9k9gKCBnceWVwaL9D7BBDMNjLh8uPYlaBlJi8/edit#gid=455932940',
                                 specialization=specialization,
                                 sheet_name=sheet_name, 
-                                course_name=course_name, 
                                 quiz_name=quiz_name, 
                                 credentials=creds)
             success = st.success('Grading Successful!')
@@ -150,10 +149,12 @@ if authentication_status:
         
         elif return_classroom and st.session_state['graded'] == True:
             with st.spinner('Returning Grade to Google Classroom...'):
-                grade_df, warnings = ReturnClassroom(df=df,
-                                                     course_name=course_name, 
-                                                     quiz_name=quiz_name, 
-                                                     credentials=creds)
+                grade_table, warnings = ReturnClassroom(link='https://docs.google.com/spreadsheets/d/1cGJ0pn9k9gKCBnceWVwaL9D7BBDMNjLh8uPYlaBlJi8/edit#gid=455932940',
+                                                        specialization=specialization,
+                                                        sheet_name=sheet_name, 
+                                                        course_name=course_name, 
+                                                        quiz_name=quiz_name, 
+                                                        credentials=creds)
                 
             success = st.success('Return Successful!')
             my_bar = st.progress(0, text="Loading result. Please wait...")
