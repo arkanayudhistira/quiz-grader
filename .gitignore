@@ -10,3 +10,4 @@ token_algoritma.json
 .streamlit/secrets_old.toml
 .streamlit/secrets_algodata.toml
 ExploratoryDataAnalysisEDAQuiz-all_0.csv
+__pycache__/quiz_grader.cpython-311.pyc
