@@ -4,10 +4,10 @@ ProgrammingforDataScienceandPracticalStatistics-all_0.csv
 credentials.json
 quiz-grader-github.code-workspace
 quiz-grader-R.ipynb
-token.json
+*.json
+*.toml
 credentials_algoritma.json
 token_algoritma.json
-.streamlit/secrets_old.toml
-.streamlit/secrets_algodata.toml
 ExploratoryDataAnalysisEDAQuiz-all_0.csv
 __pycache__/quiz_grader.cpython-311.pyc
+tes_csv/

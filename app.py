@@ -113,7 +113,7 @@ if authentication_status:
             if specialization == 'Data Analytics':
                 sheet_name = st.text_input("Input Score Academy Sheet Name", value=f"{course_name.split()[0]} DA")
             else:
-                sheet_name = st.text_input("Input Score Academy Sheet Name", value=f"Academy: Batch {ord(course_name.split()[0][0])-64}")
+                sheet_name = st.text_input("Input Score Academy Sheet Name", value=f"Academy: Batch {ord(course_name.split()[0][0])-38}")
 
         filepath = st.file_uploader("Upload Algoritma Online CSV", type="csv")
 
@@ -165,7 +165,6 @@ if authentication_status:
             time.sleep(1)
             
             my_bar.empty()
-            success.empty()
 
             percent_complete = True
             
